@@ -8,6 +8,11 @@ RAW_DATA_DIR = PROJECT_ROOT / 'data' / 'raw' / 'Caravan_extension_Israel_Ver4' /
 ATTRIBUTES_DIR = RAW_DATA_DIR / 'attributes' / 'il'
 TIMESERIES_DIR = RAW_DATA_DIR / 'timeseries' / 'csv' / 'il'
 
+ATTRIBUTES_FILES = [
+    'attributes_caravan_il.csv',
+    'attributes_hydroatlas_il.csv',
+    'attributes_other_il.csv'
+]
 
 PROCESSED_DATA_DIR = PROJECT_ROOT / 'data' / 'processed'
 MODELS_DIR = PROJECT_ROOT / 'models'
