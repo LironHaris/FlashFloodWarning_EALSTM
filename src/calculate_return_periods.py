@@ -122,6 +122,5 @@ def calculate_return_periods():
         logger.warning("No basins were successfully processed.")
     logger.info(f"Skipped {skipped_count} basins due to missing data or insufficient history.")
 
-
 if __name__ == "__main__":
     calculate_return_periods()

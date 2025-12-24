@@ -10,7 +10,6 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
 class FlashFloodDataset(Dataset):
     def __init__(self, mode='train', seq_length=270):
         """
@@ -31,7 +30,6 @@ class FlashFloodDataset(Dataset):
 
         self.scaler = DataScaler()
         self.scaler.load_scaler()
-
 
         dfs = []
         for csv_name in config.ATTRIBUTES_FILES:
@@ -54,7 +52,6 @@ class FlashFloodDataset(Dataset):
         else:
             raise FileNotFoundError("No attribute files found! Check config.ATTRIBUTES_FILES.")
 
-
         numeric_cols = self.attributes_df.select_dtypes(include=[np.number]).columns.tolist()
         self.static_feature_cols = [c for c in numeric_cols if c != 'gauge_id']
 
@@ -66,7 +63,6 @@ class FlashFloodDataset(Dataset):
                                                        ) / (self.attributes_df[self.static_feature_cols].std() + 1e-6)
 
         self.attributes_df.set_index('gauge_id', inplace=True)
-
 
         self.static_data_map = self.attributes_df[self.static_feature_cols].T.to_dict('list')
 
@@ -160,7 +156,6 @@ class FlashFloodDataset(Dataset):
         x_stat = torch.tensor(self.static_data_map[basin_id], dtype=torch.float32)
 
         return x_dyn, x_stat, y
-
 
 if __name__ == "__main__":
     for m in ['train', 'val']:

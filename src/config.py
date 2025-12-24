@@ -22,7 +22,6 @@ PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-#Hyperparameters & Settings
 SEED = 42
 DATE_COL = 'date'
 TARGET_COL = 'streamflow'

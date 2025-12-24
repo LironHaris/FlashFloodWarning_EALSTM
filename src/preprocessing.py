@@ -8,7 +8,6 @@ from tqdm import tqdm
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
 class DataScaler:
     """
     Handles data normalization and feature engineering specifically for hydrological time series.
@@ -126,7 +125,6 @@ class DataScaler:
             df_norm['cos_day'] = np.cos(2 * np.pi * day_of_year / 366)
 
         return df_norm
-
 
 if __name__ == "__main__":
     TRAIN_START = "1980-01-01"
