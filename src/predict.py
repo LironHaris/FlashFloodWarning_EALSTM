@@ -10,6 +10,7 @@ import config
 from dataset import FlashFloodDataset
 from model import EALSTM
 from preprocessing import DataScaler
+import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -38,6 +39,8 @@ def plot_hydrograph(df, save_dir):
     plt.legend()
     plt.grid(True, alpha=0.3)
 
+    os.makedirs(save_dir, exist_ok=True)
+
     plot_path = save_dir / f"hydrograph_basin_{chosen_basin}.png"
     plt.savefig(plot_path)
     plt.close()
@@ -47,11 +50,11 @@ def plot_hydrograph(df, save_dir):
 
 def evaluate_test_set():
     """
-    Loads the best trained model and generates predictions for the TEST set (2005-2015).
-    Saves the results to 'test_results.csv' and plots a sample hydrograph.
+    Loads the best trained model and generates predictions for the TEST set.
     """
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    BATCH_SIZE = 256
+
+    BATCH_SIZE = 64
     HIDDEN_DIM = 256
 
     logger.info(f"Running inference on device: {DEVICE}")
@@ -65,6 +68,10 @@ def evaluate_test_set():
 
     model = EALSTM(input_dim_dyn, input_dim_stat, HIDDEN_DIM).to(DEVICE)
     model_path = config.MODELS_DIR / "best_model.pth"
+
+    if not model_path.exists():
+        logger.warning(f"Best model not found at {model_path}. Checking for checkpoint...")
+        model_path = config.MODELS_DIR / "latest_checkpoint.pth"
 
     if not model_path.exists():
         logger.error("No trained model found! Run train.py first.")
@@ -83,8 +90,6 @@ def evaluate_test_set():
 
     target_mean = scaler.means[config.TARGET_COL]
     target_std = scaler.stds[config.TARGET_COL]
-
-    logger.info(f"Scaler params for target: Mean={target_mean:.4f}, Std={target_std:.4f}")
 
     results = []
 
@@ -115,10 +120,13 @@ def evaluate_test_set():
         final_df['q_sim_cms'] = final_df['q_sim_cms'].clip(lower=0.0)
         final_df['date'] = pd.to_datetime(final_df['date'])
 
+        os.makedirs(config.PROCESSED_DATA_DIR, exist_ok=True)
+
         output_path = config.PROCESSED_DATA_DIR / "test_results.csv"
         final_df.to_csv(output_path, index=False)
 
         logger.info(f"Saved predictions to {output_path}")
+
         plot_hydrograph(final_df, config.PROCESSED_DATA_DIR)
 
         logger.info("Summary Statistics:")
