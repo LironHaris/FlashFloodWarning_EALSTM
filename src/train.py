@@ -4,12 +4,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import logging
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 import config
 from dataset import FlashFloodDataset
 from model import EALSTM
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
+
 
 class WeightedNSELoss(nn.Module):
     """
@@ -50,16 +52,18 @@ class WeightedNSELoss(nn.Module):
         return torch.mean(normalized_errors)
 
 
-def train_one_epoch(model, loader, optimizer, criterion, device):
+def train_one_epoch(model, loader, optimizer, criterion, device, epoch_index, total_epochs):
     """
     Executes one training epoch.
     Updates model weights based on the Weighted NSE Loss.
     """
     model.train()
     total_loss = 0.0
-    pbar = tqdm(loader, desc="Training", leave=False)
 
-    for x_dyn, x_stat, y, basin_var, _ in pbar:
+    desc = f"Epoch {epoch_index}/{total_epochs} [Train]"
+    pbar = tqdm(loader, desc=desc)
+
+    for x_dyn, x_stat, y, basin_var, _, _, _ in pbar:
         x_dyn, x_stat = x_dyn.to(device), x_stat.to(device)
         y, basin_var = y.to(device), basin_var.to(device)
 
@@ -77,6 +81,7 @@ def train_one_epoch(model, loader, optimizer, criterion, device):
 
     return total_loss / len(loader)
 
+
 def validate(model, loader, criterion, device):
     """
     Evaluates model performance on validation set.
@@ -91,7 +96,7 @@ def validate(model, loader, criterion, device):
     false_alarms = 0
 
     with torch.no_grad():
-        for x_dyn, x_stat, y, basin_var, threshold in loader:
+        for x_dyn, x_stat, y, basin_var, threshold, _, _ in loader:
             x_dyn, x_stat = x_dyn.to(device), x_stat.to(device)
             y, basin_var = y.to(device), basin_var.to(device)
             threshold = threshold.to(device)
@@ -121,6 +126,7 @@ def validate(model, loader, criterion, device):
         "pod": pod,
         "far": far
     }
+
 
 def plot_training_history(history, save_dir):
     """
@@ -170,7 +176,8 @@ def main():
     train_ds = FlashFloodDataset(mode='train', seq_length=270)
     val_ds = FlashFloodDataset(mode='val', seq_length=270)
 
-    sample_x_dyn, sample_x_stat, _, _, _ = train_ds[0]
+    sample_x_dyn, sample_x_stat, _, _, _, _, _ = train_ds[0]
+
     input_dim_dyn = sample_x_dyn.shape[1]
     input_dim_stat = sample_x_stat.shape[0]
 
@@ -194,7 +201,7 @@ def main():
     logger.info("Starting Training Loop...")
 
     for epoch in range(EPOCHS):
-        train_loss = train_one_epoch(model, train_loader, optimizer, criterion, DEVICE)
+        train_loss = train_one_epoch(model, train_loader, optimizer, criterion, DEVICE, epoch + 1, EPOCHS)
 
         metrics = validate(model, val_loader, criterion, DEVICE)
 
@@ -218,5 +225,7 @@ def main():
     plot_training_history(history, config.PROCESSED_DATA_DIR)
 
     logger.info("Training complete.")
+
+
 if __name__ == "__main__":
     main()

@@ -19,7 +19,11 @@ class FlashFloodDataset(Dataset):
         self.mode = mode
         self.seq_length = seq_length
         self.scaler = DataScaler()
-        self.scaler.load_scaler()
+
+        try:
+            self.scaler.load_scaler()
+        except FileNotFoundError:
+            pass
 
         dfs = []
         for csv_name in config.ATTRIBUTES_FILES:
@@ -70,16 +74,16 @@ class FlashFloodDataset(Dataset):
             start_date = pd.to_datetime("1980-01-01")
             end_date = pd.to_datetime("2000-09-30")
         elif self.mode == 'val':
-            start_date = pd.to_datetime("2000-10-01")
+            start_date = pd.to_datetime("2001-01-01")
             end_date = pd.to_datetime("2005-09-30")
-        else:
+        else:  # test
             start_date = pd.to_datetime("2005-10-01")
             end_date = pd.to_datetime("2015-09-30")
 
         ts_files = list(config.TIMESERIES_DIR.glob('*.csv'))
         logger.info(f"Loading {self.mode.upper()} data...")
 
-        conversion_factor = (1000 * 1000) / (1000 * 86400)  # ≈ 0.011574 (mm/day * area -> CMS)
+        conversion_factor = (1000 * 1000) / (1000 * 86400)  # mm/day to cms
 
         for f in tqdm(ts_files, desc=f"Processing {self.mode}"):
             try:
@@ -89,6 +93,7 @@ class FlashFloodDataset(Dataset):
 
                 df = pd.read_csv(f)
                 df[config.DATE_COL] = pd.to_datetime(df[config.DATE_COL])
+
                 mask = (df[config.DATE_COL] >= start_date) & (df[config.DATE_COL] <= end_date)
                 df = df[mask].copy()
 
@@ -96,6 +101,8 @@ class FlashFloodDataset(Dataset):
 
                 if len(df) < self.seq_length + 1:
                     continue
+
+                dates_array = df[config.DATE_COL].dt.strftime('%Y-%m-%d').values
 
                 orig_mean = df[config.TARGET_COL].mean()
                 orig_std = df[config.TARGET_COL].std()
@@ -122,6 +129,7 @@ class FlashFloodDataset(Dataset):
                     'basin_id': basin_id,
                     'data_matrix': data_matrix,
                     'target_array': target_array,
+                    'dates': dates_array,
                     'basin_var': basin_var,
                     'threshold': norm_threshold
                 })
@@ -148,10 +156,14 @@ class FlashFloodDataset(Dataset):
         basin_id = sample['basin_id']
 
         x_dyn = sample['data_matrix'][start_row: start_row + self.seq_length]
-        y = sample['target_array'][start_row + self.seq_length - 1]
-        x_stat = torch.tensor(self.static_data_map[basin_id], dtype=torch.float32)
 
+        target_idx = start_row + self.seq_length - 1
+        y = sample['target_array'][target_idx]
+
+        date_str = sample['dates'][target_idx]
+
+        x_stat = torch.tensor(self.static_data_map[basin_id], dtype=torch.float32)
         basin_var = torch.tensor(sample['basin_var'], dtype=torch.float32)
         threshold = torch.tensor(sample['threshold'], dtype=torch.float32)
 
-        return x_dyn, x_stat, y, basin_var, threshold
+        return x_dyn, x_stat, y, basin_var, threshold, basin_id, date_str
