@@ -54,9 +54,9 @@ Once the model is trained and the `best_model.pth` is saved, I use the `predict.
   $$Discharge_{(CMS)} = (Prediction_{(Z-score)} \times \sigma_{target}) + \mu_{target}$$
 * **Physical Constraints**: I applied a **clipping** operation to ensure all predicted values are non-negative.
 
-## 6. Limitations & Future Work
-While the current implementation is effective, I have identified several areas for future improvement:
-* **Leave-Region-Out**: Testing the model's spatial generalization by withholding entire geographic regions.
-* **Downstream/Upstream Leakage**: Grouping hydrologically connected basins into the same data splits to prevent information leakage through water flow correlation.
-* **Quality Flags**: Integrating sensor reliability metadata to weight the loss function.
-* **F1-Score & KGE**: Adding the **F1-Score** and **Kling-Gupta Efficiency (KGE)** for better performance evaluation.
+## 6. Experimental Results & Analysis
+
+We conducted a preliminary experiment to validate the model pipeline using a reduced dataset (5 years training, 1 year validation) trained for **5 epochs**. Below is an analysis of the model's performance and behavior.
+
+### Training Metrics
+![Training History](
