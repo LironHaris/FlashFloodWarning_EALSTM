@@ -6,7 +6,7 @@ This project implements a deep learning system for predicting flash floods in Is
 ## 1. Model Architecture: EA-LSTM
 The core of this project is the **EA-LSTM**, which is tailored for rainfall-runoff modeling by distinguishing between dynamic and static inputs.
 
-![EA-LSTM Architecture](Screenshot%202025-12-25%20075602.png)
+<img src="Screenshot%202025-12-25%20075602.png" width="500" alt="EA-LSTM Architecture">
 
 * **Logic**: Standard LSTMs treat static attributes (e.g., soil type, basin area) as dynamic inputs that repeat daily, which often hinders the model's ability to learn long-term spatial contexts.
 * **Implementation**: I implemented a specialized **Input Gate ($i$)** that processes only the static attributes ($x_s$) to modulate the cell state, while the remaining gates handle the dynamic time-series data ($x_d$).
@@ -18,12 +18,12 @@ The training process is governed by a custom loss function designed to handle hy
 ### Weighted NSE Loss
 I implemented a custom Loss function based on the following mathematical framework:
 
-![Loss Formula](Screenshot%202025-12-25%20075613.png)
+<img src="Screenshot%202025-12-25%20075613.png" width="400" alt="Loss Formula">
 
 * **Variance Scaling**: The error is normalized by the basin's natural variance ($\sigma_{basin,b}^2$), ensuring that basins with naturally high discharge don't overwhelm the training process.
 * **Flow Weighting ($W_{(b,t)}$)**: To focus on floods rather than low-flow days, I utilized a weighting factor based on observed discharge:
 
-![Weight Formula](Screenshot%202025-12-25%20075623.png)
+<img src="Screenshot%202025-12-25%20075623.png" width="300" alt="Weight Formula">
 
 ### Mini-Batch Gradient Descent
 * **Implementation**: I used the **Adam optimizer** with a batch size of 256.
@@ -56,30 +56,39 @@ Once the model is trained and the `best_model.pth` is saved, I use the `predict.
 
 ## 6. Experimental Results & Analysis
 
-I conducted a preliminary experiment to validate the model pipeline using a reduced dataset (5 years training, 1 year validation) trained for **5 epochs**. Below is an analysis of the model's performance and behavior.
+I conducted two distinct experimental phases to characterize the model's behavior under different constraints. These experiments demonstrate the trade-off between training duration, dataset size, and generalization capability.
 
-### Training Metrics
-![Training History](training_history.png)
-*(Fig 1: Training and Validation Loss alongside Hydrological Metrics)*
+### Phase A: Pipeline Validation (Underfitting)
+* **Setup**: Large tarining dataset (20 years), Short training (5 Epochs).
+* **Goal**: To verify the end-to-end pipeline and baseline stability.
+
+<img src="training_history.png" width="500" alt="Phase 1 Training History">
+<img src="hydrograph_basin_il_30120.png" width="500" alt="Phase 1 Hydrograph">
 
 **Observations:**
-* **Loss Trend**: Both Training and Validation loss showed a general downward trend, indicating that the EA-LSTM is successfully learning features from the dynamic and static inputs.
-* **Metrics**: The model achieved relatively high **CSI** and **POD** scores, combined with a low **FAR** (False Alarm Ratio).
-* **Stability**: The metrics (CSI/POD) remained constant after the initial epochs. This plateau, along with the lack of a sharp descent in Validation Loss, is attributed to the **limited training duration (5 epochs)**. The model quickly converged to a baseline strategy but requires significantly more epochs (e.g., 30+) and the full dataset to refine its weights and improve peak detection.
+* The metrics (CSI, POD) stabilized quickly, and the validation loss showed a moderate decrease.
+* The hydrograph shows that the model identifies flow events (orange line > 0) but significantly underestimates peaks.
+* **Conclusion**: This indicates **Underfitting**. The model learned the "average" behavior but lacked sufficient training iterations to capture extreme events.
 
-### Hydrograph Analysis
-![Sample Hydrograph](hydrograph_basin_il_30120.png)
-*(Fig 2: Observed vs. Simulated Discharge for a sample basin)*
+### Phase B: Capacity Analysis (Overfitting)
+* **Setup**: Reduced training dataset (5 years), Extended training (20 Epochs).
+* **Goal**: To test the model's learning capacity and convergence on specific data.
 
-**Interpretation:**
-* **Activity Detection**: The model demonstrates an ability to predict flow activity. As seen in the graph, the simulated flow (orange line) is consistently above the baseline, indicating the model is **not** simply predicting zero/dry conditions (a common issue in imbalanced hydrological datasets).
-* **Peak Capture**: Currently, the model struggles to capture the full magnitude of extreme flood peaks (underestimation). This "smoothing" behavior is expected in early-stage training.
-* **Conclusion**: The model correctly identifies the *potential* for flow events but requires extended training to accurately model the *intensity* of the discharge peaks.
+<img src="training_history2.png" width="500" alt="Phase 2 Training History">
+<img src="hydrograph_basin_il_48192.png" width="500" alt="Phase 2 Hydrograph">
+
+**Observations:**
+* **Sharp Loss Drop**: The Training Loss (Blue line) dropped significantly, proving the EA-LSTM has the capacity to learn complex patterns.
+* **Generalization Gap**: However, the Validation Loss (Orange line) stagnated, and metrics did not improve correspondingly.
+* **Conclusion**: This indicates **Overfitting**. The model "memorized" the small training set. While it performs well on training data, it remains conservative on the test set because it hasn't seen enough historical variance to generalize to new years.
+
+**Summary:** The comparison confirms that the architecture is sound (Phase B proof) but requires the full 35-year dataset to prevent overfitting, alongside Early Stopping to prevent the stagnation seen in Phase B.
 
 ## 7. Limitations & Future Work
-While the current implementation is effective, I have identified several areas for future improvement:
+Based on the experimental analysis, I have defined the following roadmap:
 
-* **Early Stopping / Early Dropping**: Implementing an automated mechanism to halt training when validation loss stagnates, which will help prevent **overfitting** and save computational resources.
+* **Early Stopping / Early Dropping**: Implementing an automated mechanism to halt training when validation loss stagnates (as seen in Phase B). This is crucial to prevent overfitting and save computational resources.
+* **Full Dataset Training**: Scaling the training back to the full 35-year historical record. This will provide the variance needed to solve the overfitting issue and improve peak detection.
 * **Leave-Region-Out**: Testing the model's spatial generalization by withholding entire geographic regions.
 * **Downstream/Upstream Leakage**: Grouping hydrologically connected basins into the same data splits to prevent information leakage through water flow correlation.
 * **Quality Flags**: Integrating sensor reliability metadata to weight the loss function.
