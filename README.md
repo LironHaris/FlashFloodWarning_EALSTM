@@ -67,7 +67,7 @@ I conducted two distinct experimental phases to characterize the model's behavio
 
 **Observations:**
 * The metrics (CSI, POD) stabilized quickly, and the validation loss showed a moderate decrease.
-* The hydrograph shows that the model identifies flow events (orange line > 0) but significantly underestimates peaks.
+* **Hydrograph Analysis**: The hydrograph demonstrates that the model successfully captures the **timing** of flow events. However, it struggles with accurate **magnitude estimation**, exhibiting inconsistency where predictions sometimes overshoot or undershoot the observed peaks.
 * **Conclusion**: This indicates **Underfitting**. The model learned the "average" behavior but lacked sufficient training iterations to capture extreme events.
 
 ### Phase B: Capacity Analysis (Overfitting)
