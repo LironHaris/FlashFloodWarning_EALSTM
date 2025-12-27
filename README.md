@@ -59,7 +59,7 @@ Once the model is trained and the `best_model.pth` is saved, I use the `predict.
 I conducted a preliminary experiment to validate the model pipeline using a reduced dataset (5 years training, 1 year validation) trained for **5 epochs**. Below is an analysis of the model's performance and behavior.
 
 ### Training Metrics
-![Training History](docs/training_history.png)
+![Training History](training_history.png)
 *(Fig 1: Training and Validation Loss alongside Hydrological Metrics)*
 
 **Observations:**
@@ -68,7 +68,7 @@ I conducted a preliminary experiment to validate the model pipeline using a redu
 * **Stability**: The metrics (CSI/POD) remained constant after the initial epochs. This plateau, along with the lack of a sharp descent in Validation Loss, is attributed to the **limited training duration (5 epochs)**. The model quickly converged to a baseline strategy but requires significantly more epochs (e.g., 30+) and the full dataset to refine its weights and improve peak detection.
 
 ### Hydrograph Analysis
-![Sample Hydrograph](docs/hydrograph_sample.png)
+![Sample Hydrograph](hydrograph_basin_il_30120.png)
 *(Fig 2: Observed vs. Simulated Discharge for a sample basin)*
 
 **Interpretation:**
