@@ -56,7 +56,31 @@ Once the model is trained and the `best_model.pth` is saved, I use the `predict.
 
 ## 6. Experimental Results & Analysis
 
-We conducted a preliminary experiment to validate the model pipeline using a reduced dataset (5 years training, 1 year validation) trained for **5 epochs**. Below is an analysis of the model's performance and behavior.
+I conducted a preliminary experiment to validate the model pipeline using a reduced dataset (5 years training, 1 year validation) trained for **5 epochs**. Below is an analysis of the model's performance and behavior.
 
 ### Training Metrics
-![Training History](
+![Training History](docs/training_history.png)
+*(Fig 1: Training and Validation Loss alongside Hydrological Metrics)*
+
+**Observations:**
+* **Loss Trend**: Both Training and Validation loss showed a general downward trend, indicating that the EA-LSTM is successfully learning features from the dynamic and static inputs.
+* **Metrics**: The model achieved relatively high **CSI** and **POD** scores, combined with a low **FAR** (False Alarm Ratio).
+* **Stability**: The metrics (CSI/POD) remained constant after the initial epochs. This plateau, along with the lack of a sharp descent in Validation Loss, is attributed to the **limited training duration (5 epochs)**. The model quickly converged to a baseline strategy but requires significantly more epochs (e.g., 30+) and the full dataset to refine its weights and improve peak detection.
+
+### Hydrograph Analysis
+![Sample Hydrograph](docs/hydrograph_sample.png)
+*(Fig 2: Observed vs. Simulated Discharge for a sample basin)*
+
+**Interpretation:**
+* **Activity Detection**: The model demonstrates an ability to predict flow activity. As seen in the graph, the simulated flow (orange line) is consistently above the baseline, indicating the model is **not** simply predicting zero/dry conditions (a common issue in imbalanced hydrological datasets).
+* **Peak Capture**: Currently, the model struggles to capture the full magnitude of extreme flood peaks (underestimation). This "smoothing" behavior is expected in early-stage training.
+* **Conclusion**: The model correctly identifies the *potential* for flow events but requires extended training to accurately model the *intensity* of the discharge peaks.
+
+## 7. Limitations & Future Work
+While the current implementation is effective, I have identified several areas for future improvement:
+
+* **Early Stopping / Early Dropping**: Implementing an automated mechanism to halt training when validation loss stagnates, which will help prevent **overfitting** and save computational resources.
+* **Leave-Region-Out**: Testing the model's spatial generalization by withholding entire geographic regions.
+* **Downstream/Upstream Leakage**: Grouping hydrologically connected basins into the same data splits to prevent information leakage through water flow correlation.
+* **Quality Flags**: Integrating sensor reliability metadata to weight the loss function.
+* **F1-Score & KGE**: Adding the **F1-Score** and **Kling-Gupta Efficiency (KGE)** for better performance evaluation.
