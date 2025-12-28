@@ -87,6 +87,8 @@ I conducted two distinct experimental phases to characterize the model's behavio
 ## 7. Limitations & Future Work
 Based on the experimental analysis, I have defined the following roadmap:
 
+* **Data Augmentation (Gaussian Noise)**: Injecting additive Gaussian noise to the static and dynamic inputs during training. This technique is expected to improve model robustness and reduce overfitting by preventing the network from relying on specific artifacts in the training data.
+* **Model Interpretability (Morris Method)**: Implementing the **Morris Method** for global sensitivity analysis. This will allow us to quantify which static attributes (e.g., soil type, slope) and dynamic forcings have the most significant impact on flood predictions, transforming the "black-box" model into an explainable hydrological tool.
 * **Early Stopping / Early Dropping**: Implementing an automated mechanism to halt training when validation loss stagnates (as seen in Phase B). This is crucial to prevent overfitting and save computational resources.
 * **Full Dataset Training**: Scaling the training back to the full 35-year historical record. This will provide the variance needed to solve the overfitting issue and improve peak detection.
 * **Leave-Region-Out**: Testing the model's spatial generalization by withholding entire geographic regions.
