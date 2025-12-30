@@ -94,4 +94,4 @@ Based on the experimental analysis, I have defined the following roadmap:
 * **Leave-Region-Out**: Testing the model's spatial generalization by withholding entire geographic regions.
 * **Downstream/Upstream Leakage**: Grouping hydrologically connected basins into the same data splits to prevent information leakage through water flow correlation.
 * **Quality Flags**: Integrating sensor reliability metadata to weight the loss function.
-* **F1-Score & KGE**: Adding the **F1-Score** and **Kling-Gupta Efficiency (KGE)** for better performance evaluation.
+* **F1-Score & KGE**: Adding the F1-Score and Kling-Gupta Efficiency (KGE) for better performance evaluation.
