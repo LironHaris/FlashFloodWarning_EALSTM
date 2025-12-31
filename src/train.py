@@ -127,7 +127,7 @@ def plot_training_history(history, save_dir):
 def main():
     BATCH_SIZE = 256
     LEARNING_RATE = 1e-3
-    EPOCHS = 20
+    EPOCHS = 30
     HIDDEN_DIM = 256
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

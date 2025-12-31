@@ -71,14 +71,14 @@ class FlashFloodDataset(Dataset):
 
     def _load_data(self):
         if self.mode == 'train':
-            start_date = pd.to_datetime("1995-01-01")#1980-01-01
-            end_date = pd.to_datetime("2000-09-30")#2000-09-30
+            start_date = pd.to_datetime("1980-01-01")
+            end_date = pd.to_datetime("2000-09-30")
         elif self.mode == 'val':
-            start_date = pd.to_datetime("2001-01-01")#2001-01-01
-            end_date = pd.to_datetime("2002-09-30")#2005-09-30
+            start_date = pd.to_datetime("2001-01-01")
+            end_date = pd.to_datetime("2005-09-30")
         else:  # test
-            start_date = pd.to_datetime("2002-10-01")#2005-10-01
-            end_date = pd.to_datetime("2005-09-30")#2015-09-30
+            start_date = pd.to_datetime("2005-10-01")
+            end_date = pd.to_datetime("2015-09-30")
 
         ts_files = list(config.TIMESERIES_DIR.glob('*.csv'))
         logger.info(f"Loading {self.mode.upper()} data...")
