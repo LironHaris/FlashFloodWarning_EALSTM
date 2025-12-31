@@ -61,21 +61,14 @@ def calculate_return_periods():
 
         df = df.dropna(subset=[config.TARGET_COL])
 
-        # --- חזרה לסטנדרט מחמיר: מינימום 5 שנות דאטה מלאות ---
         if len(df) < 365 * 5:
             skipped_count += 1
             continue
 
-        # --- שמירה על התיקון הקריטי: ללא המרת יחידות (הדאטה כבר ב-CMS) ---
         df['discharge_cms'] = df[config.TARGET_COL].values
-
-        # חישוב שנה הידרולוגית
         df['water_year'] = df[config.DATE_COL].dt.year + (df[config.DATE_COL].dt.month >= 10).astype(int)
-
-        # שליפת המקסימום השנתי
         annual_max = df.groupby('water_year')['discharge_cms'].max()
 
-        # --- חזרה לסטנדרט מחמיר: מינימום 10 שנות שיא לחישוב סטטיסטי ---
         if len(annual_max) < 10:
             skipped_count += 1
             continue
@@ -108,7 +101,6 @@ def calculate_return_periods():
         logger.warning("No basins were successfully processed.")
 
     logger.info(f"Skipped {skipped_count} basins due to insufficient history.")
-
 
 if __name__ == "__main__":
     calculate_return_periods()

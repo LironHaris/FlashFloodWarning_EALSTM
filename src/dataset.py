@@ -10,6 +10,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 class FlashFloodDataset(Dataset):
     def __init__(self, mode='train', seq_length=270):
         """
@@ -56,13 +57,15 @@ class FlashFloodDataset(Dataset):
 
         rp_path = config.PROCESSED_DATA_DIR / 'return_periods.csv'
         self.basin_thresholds_cms = {}
+
         self.basin_areas = {}
 
         if rp_path.exists():
             rp_df = pd.read_csv(rp_path)
             rp_df['gauge_id'] = rp_df['gauge_id'].astype(str)
             self.basin_thresholds_cms = rp_df.set_index('gauge_id')['Q_5y'].to_dict()
-            self.basin_areas = rp_df.set_index('gauge_id')['area_km2'].to_dict()
+            if 'area_km2' in rp_df.columns:
+                self.basin_areas = rp_df.set_index('gauge_id')['area_km2'].to_dict()
         else:
             logger.warning(f"Return periods file not found at {rp_path}")
 
@@ -83,8 +86,6 @@ class FlashFloodDataset(Dataset):
         ts_files = list(config.TIMESERIES_DIR.glob('*.csv'))
         logger.info(f"Loading {self.mode.upper()} data...")
 
-        conversion_factor = (1000 * 1000) / (1000 * 86400)  # mm/day to cms
-
         for f in tqdm(ts_files, desc=f"Processing {self.mode}"):
             try:
                 basin_id = str(f.stem)
@@ -96,28 +97,23 @@ class FlashFloodDataset(Dataset):
 
                 mask = (df[config.DATE_COL] >= start_date) & (df[config.DATE_COL] <= end_date)
                 df = df[mask].copy()
-
                 df = df.interpolate(method='linear', limit=5).dropna()
 
                 if len(df) < self.seq_length + 1:
                     continue
 
                 dates_array = df[config.DATE_COL].dt.strftime('%Y-%m-%d').values
-
                 orig_mean = df[config.TARGET_COL].mean()
                 orig_std = df[config.TARGET_COL].std()
 
                 df = self.scaler.normalize(df)
                 basin_var = df[config.TARGET_COL].var()
+
                 norm_threshold = 9999.0
 
-                if basin_id in self.basin_thresholds_cms and basin_id in self.basin_areas:
+                if basin_id in self.basin_thresholds_cms:
                     q5_cms = self.basin_thresholds_cms[basin_id]
-                    area = self.basin_areas[basin_id]
-
-                    if area > 0:
-                        q5_mm_day = q5_cms / (area * conversion_factor)
-                        norm_threshold = (q5_mm_day - orig_mean) / (orig_std + 1e-6)
+                    norm_threshold = (q5_cms - orig_mean) / (orig_std + 1e-6)
 
                 features = config.DYNAMIC_FEATURES + ['sin_day', 'cos_day']
                 target = config.TARGET_COL
@@ -156,7 +152,6 @@ class FlashFloodDataset(Dataset):
         basin_id = sample['basin_id']
 
         x_dyn = sample['data_matrix'][start_row: start_row + self.seq_length]
-
         target_idx = start_row + self.seq_length - 1
         y = sample['target_array'][target_idx]
 

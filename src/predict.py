@@ -15,14 +15,17 @@ import os
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 def plot_hydrograph(df, save_dir):
     """
     Plots Observed vs Simulated discharge with Q2 Threshold and Performance Stats (Hits/False Alarms).
+    Specifically targets basin il_30120 if available.
     """
     unique_basins = df['basin_id'].unique()
     if len(unique_basins) == 0:
         logger.warning("No basins found in results to plot.")
         return
+
     rp_path = config.PROCESSED_DATA_DIR / 'return_periods.csv'
     rp_df = None
     if rp_path.exists():
@@ -31,7 +34,22 @@ def plot_hydrograph(df, save_dir):
     else:
         logger.warning(f"Return periods file not found at {rp_path}. Thresholds will not be plotted.")
 
-    chosen_basin = random.choice(unique_basins)
+    target_basin = 'il_30120'
+    possible_ids = [target_basin, target_basin.replace('il_', ''), int(target_basin.replace('il_', ''))]
+
+    chosen_basin = None
+    for pid in possible_ids:
+        if pid in unique_basins:
+            chosen_basin = pid
+            break
+
+    if chosen_basin is not None:
+        logger.info(f"Plotting specific requested basin: {chosen_basin}")
+    else:
+        chosen_basin = random.choice(unique_basins)
+        logger.warning(
+            f"Target basin {target_basin} not found in test results! Plotting random basin instead: {chosen_basin}")
+
     basin_data = df[df['basin_id'] == chosen_basin].sort_values('date')
 
     fig, ax = plt.subplots(figsize=(12, 7))
@@ -43,7 +61,11 @@ def plot_hydrograph(df, save_dir):
     stats_text = "Threshold Stats:\nN/A"
 
     if rp_df is not None:
-        basin_rp_row = rp_df[rp_df['gauge_id'] == str(chosen_basin)]
+        basin_str_id = str(chosen_basin)
+        if not basin_str_id.startswith('il_'):
+            basin_str_id = f'il_{basin_str_id}'
+
+        basin_rp_row = rp_df[rp_df['gauge_id'] == basin_str_id]
 
         if not basin_rp_row.empty and 'Q_2y' in basin_rp_row.columns:
             q2_val = basin_rp_row.iloc[0]['Q_2y']
@@ -63,9 +85,10 @@ def plot_hydrograph(df, save_dir):
                           f"Hits (TP): {hits}\n"
                           f"False Alarms (FP): {false_alarms}\n"
                           f"Misses (FN): {misses}")
+
             ax.axhline(y=q2_val, color='red', linestyle='--', linewidth=1.5, label=f'Threshold Q2 ({q2_val:.2f})')
         else:
-            logger.warning(f"Q2 threshold not found for basin {chosen_basin}")
+            logger.warning(f"Q2 threshold not found for basin {basin_str_id}")
 
     ax.set_title(f'Flash Flood Event Analysis: Basin {chosen_basin}', fontsize=14)
     ax.set_ylabel('Discharge ($m^3/s$)', fontsize=12)
@@ -85,12 +108,13 @@ def plot_hydrograph(df, save_dir):
     plt.close()
 
     logger.info(f"Hydrograph with stats saved to: {plot_path}")
+
+
 def evaluate_test_set():
     """
     Loads the best trained model and generates predictions for the TEST set.
     """
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
     BATCH_SIZE = 256
     HIDDEN_DIM = 256
 
@@ -98,6 +122,10 @@ def evaluate_test_set():
 
     test_ds = FlashFloodDataset(mode='test', seq_length=270)
     test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    if len(test_ds) == 0:
+        logger.error("Test dataset is empty! Check your data paths and date ranges in dataset.py")
+        return
 
     sample_x_dyn, sample_x_stat, _, _, _, _, _ = test_ds[0]
     input_dim_dyn = sample_x_dyn.shape[1]
@@ -170,7 +198,6 @@ def evaluate_test_set():
         print(final_df[['q_obs_cms', 'q_sim_cms']].describe())
     else:
         logger.warning("No results generated!")
-
 
 if __name__ == "__main__":
     evaluate_test_set()

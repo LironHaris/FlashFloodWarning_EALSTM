@@ -128,7 +128,7 @@ class DataScaler:
 
 if __name__ == "__main__":
     TRAIN_START = "1980-01-01"
-    TRAIN_END = "2005-09-30"
+    TRAIN_END = "2000-09-30"
 
     scaler = DataScaler()
     scaler.fit(TRAIN_START, TRAIN_END)
