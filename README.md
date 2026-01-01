@@ -63,7 +63,7 @@ I conducted two distinct experimental phases to characterize the model's behavio
 * **Goal**: To verify the end-to-end pipeline and baseline stability.
 
 <img src="training_history.png" width="500" alt="Phase 1 Training History">
-<img src="hydrograph_basin_il_30120.png" width="500" alt="Phase 1 Hydrograph">
+<img src="hydrograph_basin_il_31160_stats.png" width="500" alt="Phase 1 Hydrograph">
 
 **Observations:**
 * The metrics (CSI, POD) stabilized quickly, and the validation loss showed a moderate decrease.
@@ -75,7 +75,6 @@ I conducted two distinct experimental phases to characterize the model's behavio
 * **Goal**: To test the model's learning capacity and convergence on specific data.
 
 <img src="training_history2.png" width="500" alt="Phase 2 Training History">
-<img src="hydrograph_basin_il_48192.png" width="500" alt="Phase 2 Hydrograph">
 
 **Observations:**
 * **Sharp Loss Drop**: The Training Loss (Blue line) dropped significantly, proving the EA-LSTM has the capacity to learn complex patterns.
